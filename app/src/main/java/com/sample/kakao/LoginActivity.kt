@@ -1,42 +1,61 @@
 package com.sample.kakao
 
-import android.content.Intent
 import android.os.Bundle
 import android.util.Log
-import android.widget.ImageView
+import android.view.View
 import androidx.appcompat.app.AppCompatActivity
-import com.kakao.sdk.auth.model.OAuthToken
+import com.bumptech.glide.Glide
 import com.kakao.sdk.user.UserApiClient
+import com.sample.kakao.databinding.ActivityMainBinding
+
+
+
+private const val TAG = "LoginActivity"
 
 class LoginActivity : AppCompatActivity() {
+    private lateinit var binding: ActivityMainBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+        binding = ActivityMainBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
         //로그인 공통 콜백 구성
-        val callback: ((OAuthToken?, Throwable?) -> Unit) = { token, error ->
-            if (error != null) { //Login Fail
-                Log.e(TAG, "Kakao Login Failed :", error)
-            } else if (token != null) { //Login Success
-                startMainActivity()
-            }
-        }
-        findViewById<ImageView>(R.id.login).setOnClickListener {
-            // 카카오톡이 설치되어 있으면 카카오톡으로 로그인, 아니라면 카카오계정으로 로그인
-            if (UserApiClient.instance.isKakaoTalkLoginAvailable(this@LoginActivity)) {
-                UserApiClient.instance.loginWithKakaoTalk(this@LoginActivity, callback = callback)
+        binding.login.setOnClickListener {
+            if (UserApiClient.instance.isKakaoTalkLoginAvailable(this)) {
+                UserApiClient.instance.loginWithKakaoTalk(this) { token, error ->
+                    Log.i(TAG, "loginWithKaKaoTalk $token $error")
+                    updateLoginInfo()
+                }
             } else {
-                UserApiClient.instance.loginWithKakaoAccount(this@LoginActivity, callback = callback)
+                UserApiClient.instance.loginWithKakaoAccount(this) { token, error ->
+                    Log.i(TAG, "loginWithKakaoAccount $token $error")
+                    updateLoginInfo()
+                }
             }
         }
+        updateLoginInfo()
     }
 
-    private fun startMainActivity() {
-        startActivity(Intent(this, MainActivity::class.java))
-    }
-
-    companion object {
-        private const val TAG = "LoginActivity"
+    private fun updateLoginInfo() {
+        UserApiClient.instance.me { user, error ->
+            user?.let {
+                Log.i(
+                    TAG,
+                    "updateLoginInfo: ${user.id} ${user.kakaoAccount?.email} ${user.kakaoAccount?.profile?.nickname} ${user.kakaoAccount?.profile?.thumbnailImageUrl}"
+                )
+                binding.nickname.text = user.kakaoAccount?.profile?.nickname
+                Glide.with(this).load(user.kakaoAccount?.profile?.thumbnailImageUrl).circleCrop()
+                    .into(binding.profile)
+                binding.login.visibility = View.GONE
+                binding.logout.visibility = View.VISIBLE
+            }
+            error?.let {
+                binding.nickname.text = null
+                binding.profile.setImageBitmap((null))
+                binding.login.visibility = View.VISIBLE
+                binding.logout.visibility = View.GONE
+            }
+        }
     }
 }

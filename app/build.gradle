@@ -5,6 +5,7 @@ plugins {
 
 android {
     compileSdkVersion 30
+    buildToolsVersion "30.0.2"
 
     defaultConfig {
         applicationId "com.sample.kakao"
@@ -29,8 +30,10 @@ android {
     kotlinOptions {
         jvmTarget = '1.8'
     }
+    viewBinding{ //바인딩을 위함
+        enabled = true
+    }
 }
-
 dependencies {
 
     implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
@@ -43,7 +46,10 @@ dependencies {
     implementation "com.kakao.sdk:v2-story:2.5.1" // 카카오스토리
     implementation "com.kakao.sdk:v2-link:2.5.1" // 메시지(카카오링크)
     implementation "com.kakao.sdk:v2-navi:2.5.1" // 카카오내비
+    implementation 'com.github.bumptech.glide:glide:4.11.0' //이미지 로딩 라이브러리
     testImplementation 'junit:junit:4.+'
     androidTestImplementation 'androidx.test.ext:junit:1.1.2'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
+
+
 }
